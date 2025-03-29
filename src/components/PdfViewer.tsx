@@ -20,6 +20,7 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField, activeColo
   const [scale, setScale] = useState<number>(1.2);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [highlightPosition, setHighlightPosition] = useState<{ x: number, y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -57,6 +58,23 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField, activeColo
     };
     
     onAnnotationAdd(newAnnotation);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!activeField || !containerRef.current) {
+      setHighlightPosition(null);
+      return;
+    }
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setHighlightPosition({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setHighlightPosition(null);
   };
 
   const zoomIn = () => {
@@ -97,6 +115,8 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField, activeColo
         ref={containerRef}
         className="pdf-container flex-1 overflow-auto border rounded-md relative"
         onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-50">
@@ -133,6 +153,17 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField, activeColo
             }}
           />
         ))}
+        
+        {highlightPosition && (
+          <div 
+            className="annotation-highlight"
+            style={{
+              left: highlightPosition.x,
+              top: highlightPosition.y,
+              borderColor: activeColor,
+            }}
+          />
+        )}
       </div>
       
       {numPages && numPages > 1 && (

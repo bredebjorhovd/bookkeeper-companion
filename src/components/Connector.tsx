@@ -65,19 +65,43 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
         // Distance calculation for the line
         const length = Math.sqrt(Math.pow(line.x2 - line.x1, 2) + Math.pow(line.y2 - line.y1, 2));
         
+        // Calculate the control points for the curve (for Sankey-like effect)
+        const midX = (line.x1 + line.x2) / 2;
+        
         return (
           <div
             key={line.id}
-            className="connecting-line"
+            className="connecting-line-container"
             style={{
-              width: `${length}px`,
-              left: `${line.x1}px`,
-              top: `${line.y1}px`,
-              transform: `rotate(${angle}deg)`,
-              transformOrigin: '0 0',
-              borderTopColor: line.color,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 20
             }}
-          />
+          >
+            <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+              <path
+                d={`M ${line.x1} ${line.y1} 
+                    C ${midX} ${line.y1}, 
+                      ${midX} ${line.y2}, 
+                      ${line.x2} ${line.y2}`}
+                stroke={line.color}
+                strokeWidth="3"
+                fill="none"
+                strokeDasharray="5,5"
+                strokeLinecap="round"
+              />
+              <circle
+                cx={line.x1}
+                cy={line.y1}
+                r="5"
+                fill={line.color}
+              />
+            </svg>
+          </div>
         );
       })}
     </>
