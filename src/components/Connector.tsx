@@ -16,6 +16,7 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
       y1: number;
       x2: number;
       y2: number;
+      color: string;
     }>
   >([]);
 
@@ -38,7 +39,8 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
           x1,
           y1,
           x2,
-          y2
+          y2,
+          color: annotation.color
         };
       }
       return null;
@@ -48,6 +50,7 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
       y1: number;
       x2: number;
       y2: number;
+      color: string;
     }>;
     
     setLines(newLines);
@@ -72,6 +75,7 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
               top: `${line.y1}px`,
               transform: `rotate(${angle}deg)`,
               transformOrigin: '0 0',
+              borderTopColor: line.color,
             }}
           />
         );

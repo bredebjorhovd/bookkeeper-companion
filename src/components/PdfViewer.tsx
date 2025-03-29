@@ -11,9 +11,10 @@ interface PdfViewerProps {
   annotations: Annotation[];
   onAnnotationAdd: (annotation: Annotation) => void;
   activeField: string | null;
+  activeColor?: string;
 }
 
-const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField }: PdfViewerProps) => {
+const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField, activeColor = '#3b82f6' }: PdfViewerProps) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.2);
@@ -51,7 +52,8 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField }: PdfViewe
       x,
       y,
       type: activeField as any,
-      value: ''
+      value: '',
+      color: activeColor
     };
     
     onAnnotationAdd(newAnnotation);
@@ -127,6 +129,7 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField }: PdfViewe
             style={{
               left: `${annotation.x}%`,
               top: `${annotation.y}%`,
+              backgroundColor: annotation.color,
             }}
           />
         ))}

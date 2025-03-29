@@ -12,6 +12,18 @@ import Navbar from "@/components/Navbar";
 import { InvoiceData, Annotation } from "@/types";
 import { Check } from "lucide-react";
 
+// Field color map for consistent coloring
+const fieldColors = {
+  vendor: "#10b981", // green
+  date: "#3b82f6",   // blue 
+  dueDate: "#8b5cf6", // purple
+  amount: "#f59e0b", // amber
+  tax: "#ef4444",    // red
+  total: "#ec4899",  // pink
+  currency: "#06b6d4", // cyan
+  notes: "#6b7280",  // gray
+};
+
 const Index = () => {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
@@ -86,8 +98,17 @@ const Index = () => {
   };
 
   const handleAnnotationAdd = (annotation: Annotation) => {
-    setAnnotations(prev => [...prev, annotation]);
+    // Remove any existing annotation for this field type
+    const filteredAnnotations = annotations.filter(ann => ann.type !== annotation.type);
+    
+    // Add the new annotation
+    setAnnotations([...filteredAnnotations, annotation]);
     setActiveField(null);
+    
+    // If there's a value in the annotation (e.g., from OCR), update the form
+    if (annotation.value) {
+      updateInvoiceField(annotation.type, annotation.value);
+    }
   };
 
   const handleAnnotationUpdate = (id: string, value: string) => {
@@ -181,6 +202,11 @@ const Index = () => {
     return annotations.some(ann => ann.type === fieldName);
   };
 
+  // Get the color for a field
+  const getFieldColor = (fieldName: string) => {
+    return fieldColors[fieldName as keyof typeof fieldColors] || "#3b82f6";
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
@@ -194,8 +220,9 @@ const Index = () => {
         ) : (
           <>
             <div className="flex flex-col space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div ref={pdfContainerRef} className="relative">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                {/* PDF Viewer - 8 columns */}
+                <div ref={pdfContainerRef} className="relative md:col-span-8">
                   <Card className="h-full">
                     <CardContent className="p-6">
                       <PdfViewer 
@@ -203,6 +230,7 @@ const Index = () => {
                         annotations={annotations} 
                         onAnnotationAdd={handleAnnotationAdd}
                         activeField={activeField}
+                        activeColor={activeField ? getFieldColor(activeField) : undefined}
                       />
                     </CardContent>
                   </Card>
@@ -217,7 +245,8 @@ const Index = () => {
                   )}
                 </div>
                 
-                <Card>
+                {/* Form Fields - 4 columns */}
+                <Card className="md:col-span-4">
                   <CardContent className="p-6">
                     <h2 className="text-xl font-semibold mb-4">Invoice Details</h2>
                     
@@ -225,160 +254,240 @@ const Index = () => {
                       <p className="text-sm text-gray-500">Click a field below, then click on the PDF to connect data points</p>
                     </div>
                     
-                    <div id="field-vendor">
-                      <FormField 
-                        id="vendor"
-                        label="Vendor"
-                        value={invoiceData.vendor?.toString() || ""}
-                        onChange={(value) => updateInvoiceField("vendor", value)}
-                        connected={isFieldConnected("vendor")}
-                      />
-                      <Button
-                        type="button"
-                        variant={activeField === "vendor" ? "default" : "outline"}
-                        size="sm"
-                        className="mb-4 w-full"
-                        onClick={() => handleFieldSelect("vendor")}
-                      >
-                        {activeField === "vendor" ? "Cancel Selection" : "Connect to PDF"}
-                      </Button>
+                    <div id="field-vendor" className="relative">
+                      <div 
+                        className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                        style={{ backgroundColor: getFieldColor('vendor') }}
+                      ></div>
+                      <div className="pl-4">
+                        <FormField 
+                          id="vendor"
+                          label="Vendor"
+                          value={invoiceData.vendor?.toString() || ""}
+                          onChange={(value) => updateInvoiceField("vendor", value)}
+                          connected={isFieldConnected("vendor")}
+                          color={getFieldColor('vendor')}
+                        />
+                        <Button
+                          type="button"
+                          variant={activeField === "vendor" ? "default" : "outline"}
+                          size="sm"
+                          className="mb-4 w-full"
+                          onClick={() => handleFieldSelect("vendor")}
+                          style={{ 
+                            ...(activeField === "vendor" && { backgroundColor: getFieldColor('vendor') }) 
+                          }}
+                        >
+                          {activeField === "vendor" ? "Cancel Selection" : "Connect to PDF"}
+                        </Button>
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <div id="field-date">
-                        <FormField 
-                          id="date"
-                          label="Invoice Date"
-                          value={invoiceData.date?.toString() || ""}
-                          onChange={(value) => updateInvoiceField("date", value)}
-                          connected={isFieldConnected("date")}
-                        />
-                        <Button
-                          type="button"
-                          variant={activeField === "date" ? "default" : "outline"}
-                          size="sm"
-                          className="mb-4 w-full"
-                          onClick={() => handleFieldSelect("date")}
-                        >
-                          {activeField === "date" ? "Cancel" : "Connect"}
-                        </Button>
+                      <div id="field-date" className="relative">
+                        <div 
+                          className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                          style={{ backgroundColor: getFieldColor('date') }}
+                        ></div>
+                        <div className="pl-4">
+                          <FormField 
+                            id="date"
+                            label="Invoice Date"
+                            value={invoiceData.date?.toString() || ""}
+                            onChange={(value) => updateInvoiceField("date", value)}
+                            connected={isFieldConnected("date")}
+                            color={getFieldColor('date')}
+                          />
+                          <Button
+                            type="button"
+                            variant={activeField === "date" ? "default" : "outline"}
+                            size="sm"
+                            className="mb-4 w-full"
+                            onClick={() => handleFieldSelect("date")}
+                            style={{ 
+                              ...(activeField === "date" && { backgroundColor: getFieldColor('date') }) 
+                            }}
+                          >
+                            {activeField === "date" ? "Cancel" : "Connect"}
+                          </Button>
+                        </div>
                       </div>
                       
-                      <div id="field-dueDate">
-                        <FormField 
-                          id="dueDate"
-                          label="Due Date"
-                          value={invoiceData.dueDate?.toString() || ""}
-                          onChange={(value) => updateInvoiceField("dueDate", value)}
-                          connected={isFieldConnected("dueDate")}
-                        />
-                        <Button
-                          type="button"
-                          variant={activeField === "dueDate" ? "default" : "outline"}
-                          size="sm"
-                          className="mb-4 w-full"
-                          onClick={() => handleFieldSelect("dueDate")}
-                        >
-                          {activeField === "dueDate" ? "Cancel" : "Connect"}
-                        </Button>
+                      <div id="field-dueDate" className="relative">
+                        <div 
+                          className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                          style={{ backgroundColor: getFieldColor('dueDate') }}
+                        ></div>
+                        <div className="pl-4">
+                          <FormField 
+                            id="dueDate"
+                            label="Due Date"
+                            value={invoiceData.dueDate?.toString() || ""}
+                            onChange={(value) => updateInvoiceField("dueDate", value)}
+                            connected={isFieldConnected("dueDate")}
+                            color={getFieldColor('dueDate')}
+                          />
+                          <Button
+                            type="button"
+                            variant={activeField === "dueDate" ? "default" : "outline"}
+                            size="sm"
+                            className="mb-4 w-full"
+                            onClick={() => handleFieldSelect("dueDate")}
+                            style={{ 
+                              ...(activeField === "dueDate" && { backgroundColor: getFieldColor('dueDate') }) 
+                            }}
+                          >
+                            {activeField === "dueDate" ? "Cancel" : "Connect"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4">
-                      <div id="field-amount">
-                        <FormField 
-                          id="amount"
-                          label="Amount"
-                          value={invoiceData.amount?.toString() || ""}
-                          onChange={(value) => updateInvoiceField("amount", value)}
-                          connected={isFieldConnected("amount")}
-                        />
-                        <Button
-                          type="button"
-                          variant={activeField === "amount" ? "default" : "outline"}
-                          size="sm"
-                          className="mb-4 w-full"
-                          onClick={() => handleFieldSelect("amount")}
-                        >
-                          {activeField === "amount" ? "Cancel" : "Connect"}
-                        </Button>
+                      <div id="field-amount" className="relative">
+                        <div 
+                          className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                          style={{ backgroundColor: getFieldColor('amount') }}
+                        ></div>
+                        <div className="pl-4">
+                          <FormField 
+                            id="amount"
+                            label="Amount"
+                            value={invoiceData.amount?.toString() || ""}
+                            onChange={(value) => updateInvoiceField("amount", value)}
+                            connected={isFieldConnected("amount")}
+                            color={getFieldColor('amount')}
+                          />
+                          <Button
+                            type="button"
+                            variant={activeField === "amount" ? "default" : "outline"}
+                            size="sm"
+                            className="mb-4 w-full"
+                            onClick={() => handleFieldSelect("amount")}
+                            style={{ 
+                              ...(activeField === "amount" && { backgroundColor: getFieldColor('amount') }) 
+                            }}
+                          >
+                            {activeField === "amount" ? "Cancel" : "Connect"}
+                          </Button>
+                        </div>
                       </div>
                       
-                      <div id="field-tax">
-                        <FormField 
-                          id="tax"
-                          label="Tax"
-                          value={invoiceData.tax?.toString() || ""}
-                          onChange={(value) => updateInvoiceField("tax", value)}
-                          connected={isFieldConnected("tax")}
-                        />
-                        <Button
-                          type="button"
-                          variant={activeField === "tax" ? "default" : "outline"}
-                          size="sm"
-                          className="mb-4 w-full"
-                          onClick={() => handleFieldSelect("tax")}
-                        >
-                          {activeField === "tax" ? "Cancel" : "Connect"}
-                        </Button>
+                      <div id="field-tax" className="relative">
+                        <div 
+                          className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                          style={{ backgroundColor: getFieldColor('tax') }}
+                        ></div>
+                        <div className="pl-4">
+                          <FormField 
+                            id="tax"
+                            label="Tax"
+                            value={invoiceData.tax?.toString() || ""}
+                            onChange={(value) => updateInvoiceField("tax", value)}
+                            connected={isFieldConnected("tax")}
+                            color={getFieldColor('tax')}
+                          />
+                          <Button
+                            type="button"
+                            variant={activeField === "tax" ? "default" : "outline"}
+                            size="sm"
+                            className="mb-4 w-full"
+                            onClick={() => handleFieldSelect("tax")}
+                            style={{ 
+                              ...(activeField === "tax" && { backgroundColor: getFieldColor('tax') }) 
+                            }}
+                          >
+                            {activeField === "tax" ? "Cancel" : "Connect"}
+                          </Button>
+                        </div>
                       </div>
                       
-                      <div id="field-total">
+                      <div id="field-total" className="relative">
+                        <div 
+                          className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                          style={{ backgroundColor: getFieldColor('total') }}
+                        ></div>
+                        <div className="pl-4">
+                          <FormField 
+                            id="total"
+                            label="Total"
+                            value={invoiceData.total?.toString() || ""}
+                            onChange={(value) => updateInvoiceField("total", value)}
+                            connected={isFieldConnected("total")}
+                            color={getFieldColor('total')}
+                          />
+                          <Button
+                            type="button"
+                            variant={activeField === "total" ? "default" : "outline"}
+                            size="sm"
+                            className="mb-4 w-full"
+                            onClick={() => handleFieldSelect("total")}
+                            style={{ 
+                              ...(activeField === "total" && { backgroundColor: getFieldColor('total') }) 
+                            }}
+                          >
+                            {activeField === "total" ? "Cancel" : "Connect"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div id="field-currency" className="relative">
+                      <div 
+                        className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                        style={{ backgroundColor: getFieldColor('currency') }}
+                      ></div>
+                      <div className="pl-4">
                         <FormField 
-                          id="total"
-                          label="Total"
-                          value={invoiceData.total?.toString() || ""}
-                          onChange={(value) => updateInvoiceField("total", value)}
-                          connected={isFieldConnected("total")}
+                          id="currency"
+                          label="Currency"
+                          value={invoiceData.currency?.toString() || ""}
+                          onChange={(value) => updateInvoiceField("currency", value)}
+                          connected={isFieldConnected("currency")}
+                          color={getFieldColor('currency')}
                         />
                         <Button
                           type="button"
-                          variant={activeField === "total" ? "default" : "outline"}
+                          variant={activeField === "currency" ? "default" : "outline"}
                           size="sm"
                           className="mb-4 w-full"
-                          onClick={() => handleFieldSelect("total")}
+                          onClick={() => handleFieldSelect("currency")}
+                          style={{ 
+                            ...(activeField === "currency" && { backgroundColor: getFieldColor('currency') }) 
+                          }}
                         >
-                          {activeField === "total" ? "Cancel" : "Connect"}
+                          {activeField === "currency" ? "Cancel" : "Connect"}
                         </Button>
                       </div>
                     </div>
                     
-                    <div id="field-currency">
-                      <FormField 
-                        id="currency"
-                        label="Currency"
-                        value={invoiceData.currency?.toString() || ""}
-                        onChange={(value) => updateInvoiceField("currency", value)}
-                        connected={isFieldConnected("currency")}
-                      />
-                      <Button
-                        type="button"
-                        variant={activeField === "currency" ? "default" : "outline"}
-                        size="sm"
-                        className="mb-4 w-full"
-                        onClick={() => handleFieldSelect("currency")}
-                      >
-                        {activeField === "currency" ? "Cancel" : "Connect"}
-                      </Button>
-                    </div>
-                    
-                    <div id="field-notes">
-                      <FormField 
-                        id="notes"
-                        label="Notes"
-                        value={invoiceData.notes?.toString() || ""}
-                        onChange={(value) => updateInvoiceField("notes", value)}
-                        connected={isFieldConnected("notes")}
-                      />
-                      <Button
-                        type="button"
-                        variant={activeField === "notes" ? "default" : "outline"}
-                        size="sm"
-                        className="mb-4 w-full"
-                        onClick={() => handleFieldSelect("notes")}
-                      >
-                        {activeField === "notes" ? "Cancel" : "Connect"}
-                      </Button>
+                    <div id="field-notes" className="relative">
+                      <div 
+                        className="absolute left-0 top-1/2 w-1 h-full -translate-y-1/2 rounded-l" 
+                        style={{ backgroundColor: getFieldColor('notes') }}
+                      ></div>
+                      <div className="pl-4">
+                        <FormField 
+                          id="notes"
+                          label="Notes"
+                          value={invoiceData.notes?.toString() || ""}
+                          onChange={(value) => updateInvoiceField("notes", value)}
+                          connected={isFieldConnected("notes")}
+                          color={getFieldColor('notes')}
+                        />
+                        <Button
+                          type="button"
+                          variant={activeField === "notes" ? "default" : "outline"}
+                          size="sm"
+                          className="mb-4 w-full"
+                          onClick={() => handleFieldSelect("notes")}
+                          style={{ 
+                            ...(activeField === "notes" && { backgroundColor: getFieldColor('notes') }) 
+                          }}
+                        >
+                          {activeField === "notes" ? "Cancel" : "Connect"}
+                        </Button>
+                      </div>
                     </div>
                     
                     <Button 
