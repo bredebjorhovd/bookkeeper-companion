@@ -142,6 +142,7 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField, activeColo
           </Document>
         )}
         
+        {/* Render annotation points */}
         {annotations.map((annotation) => (
           <div
             key={annotation.id}
@@ -154,6 +155,24 @@ const PdfViewer = ({ file, annotations, onAnnotationAdd, activeField, activeColo
           />
         ))}
         
+        {/* Render bounding boxes for annotations that have them */}
+        {annotations
+          .filter(ann => ann.boundingBox)
+          .map((annotation) => (
+            <div
+              key={`box-${annotation.id}`}
+              className="annotation-box"
+              style={{
+                left: `${annotation.boundingBox?.x || 0}%`,
+                top: `${annotation.boundingBox?.y || 0}%`,
+                width: `${annotation.boundingBox?.width || 0}%`,
+                height: `${annotation.boundingBox?.height || 0}%`,
+                borderColor: annotation.color,
+              }}
+            />
+          ))}
+        
+        {/* Render highlight cursor */}
         {highlightPosition && (
           <div 
             className="annotation-highlight"

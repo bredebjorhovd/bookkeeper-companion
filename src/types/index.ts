@@ -21,7 +21,13 @@ export interface Annotation {
   y: number;
   type: 'vendor' | 'date' | 'dueDate' | 'amount' | 'tax' | 'total' | 'currency' | 'notes';
   value: string;
-  color: string; // Added color property
+  color: string;
+  boundingBox?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 export interface PdfViewerProps {
@@ -37,5 +43,5 @@ export interface FormFieldProps {
   value: string;
   onChange: (value: string) => void;
   connected: boolean;
-  color?: string; // Added color property
+  color?: string;
 }

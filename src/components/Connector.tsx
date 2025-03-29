@@ -31,6 +31,7 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
         const x1 = (annotation.x / 100) * containerRect.width;
         const y1 = (annotation.y / 100) * containerRect.height;
         
+        // Calculate the target position (middle of the left side of the field)
         const x2 = field.left - containerRect.left;
         const y2 = field.top - containerRect.top + field.height / 2;
         
@@ -59,12 +60,6 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
   return (
     <>
       {lines.map(line => {
-        // Angle calculation for the line
-        const angle = Math.atan2(line.y2 - line.y1, line.x2 - line.x1) * 180 / Math.PI;
-        
-        // Distance calculation for the line
-        const length = Math.sqrt(Math.pow(line.x2 - line.x1, 2) + Math.pow(line.y2 - line.y1, 2));
-        
         // Calculate the control points for the curve (for Sankey-like effect)
         const midX = (line.x1 + line.x2) / 2;
         
@@ -91,13 +86,19 @@ const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) =>
                 stroke={line.color}
                 strokeWidth="3"
                 fill="none"
-                strokeDasharray="5,5"
+                strokeDasharray="none"
                 strokeLinecap="round"
               />
               <circle
                 cx={line.x1}
                 cy={line.y1}
                 r="5"
+                fill={line.color}
+              />
+              <circle
+                cx={line.x2}
+                cy={line.y2}
+                r="3"
                 fill={line.color}
               />
             </svg>
