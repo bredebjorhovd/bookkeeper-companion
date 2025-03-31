@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Annotation } from '@/types';
 
@@ -6,106 +5,72 @@ interface ConnectorProps {
   annotations: Annotation[];
   fieldsMap: Map<string, DOMRect>;
   containerRect: DOMRect | null;
+  pdfViewport: {
+    width: number;
+    height: number;
+    offsetX?: number;
+    offsetY?: number;
+  };
 }
 
-const Connector = ({ annotations, fieldsMap, containerRect }: ConnectorProps) => {
-  const [lines, setLines] = useState<
-    Array<{
-      id: string;
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      color: string;
-    }>
-  >([]);
-
-  useEffect(() => {
-    if (!containerRect) return;
-    
-    const newLines = annotations.map(annotation => {
-      const field = fieldsMap.get(annotation.type);
-      
-      if (field) {
-        // Calculate positions
-        const x1 = (annotation.x / 100) * containerRect.width;
-        const y1 = (annotation.y / 100) * containerRect.height;
-        
-        // Calculate the target position (middle of the left side of the field)
-        const x2 = field.left - containerRect.left;
-        const y2 = field.top - containerRect.top + field.height / 2;
-        
-        return {
-          id: annotation.id,
-          x1,
-          y1,
-          x2,
-          y2,
-          color: annotation.color
-        };
-      }
-      return null;
-    }).filter(Boolean) as Array<{
-      id: string;
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      color: string;
-    }>;
-    
-    setLines(newLines);
-  }, [annotations, fieldsMap, containerRect]);
-
+const Connector = ({ annotations, fieldsMap, containerRect, pdfViewport }: ConnectorProps) => {
+  // Return just the colored boxes for annotations, no connectors
   return (
-    <>
-      {lines.map(line => {
-        // Calculate the control points for the curve (for Sankey-like effect)
-        const midX = (line.x1 + line.x2) / 2;
-        
+    <div style={{
+      position: 'absolute',
+      inset: 0,
+      overflow: 'visible',
+      pointerEvents: 'none'
+    }}>
+      {containerRect && pdfViewport && annotations.map(annotation => {
+        if (!annotation.boundingBox || !pdfViewport.width || !pdfViewport.height) {
+          return null;
+        }
+
+        // Get dimensions
+        const { x, y, width, height } = annotation.boundingBox;
+        const offsetX = pdfViewport.offsetX || 0;
+        const offsetY = pdfViewport.offsetY || 0;
+
+        // Convert normalized coordinates to pixels directly
+        const left = (x * pdfViewport.width) + offsetX;
+        const top = (y * pdfViewport.height) + offsetY;
+        const boxWidth = width * pdfViewport.width;
+        const boxHeight = height * pdfViewport.height;
+
         return (
           <div
-            key={line.id}
-            className="connecting-line-container"
+            key={`box-${annotation.id}`}
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              pointerEvents: 'none',
-              zIndex: 20
+              top: `${top}px`,
+              left: `${left}px`,
+              width: `${boxWidth}px`,
+              height: `${boxHeight}px`,
+              backgroundColor: `${annotation.color}50`,
+              border: `2px solid ${annotation.color}`,
+              zIndex: 100,
             }}
           >
-            <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
-              <path
-                d={`M ${line.x1} ${line.y1} 
-                    C ${midX} ${line.y1}, 
-                      ${midX} ${line.y2}, 
-                      ${line.x2} ${line.y2}`}
-                stroke={line.color}
-                strokeWidth="3"
-                fill="none"
-                strokeDasharray="none"
-                strokeLinecap="round"
-              />
-              <circle
-                cx={line.x1}
-                cy={line.y1}
-                r="5"
-                fill={line.color}
-              />
-              <circle
-                cx={line.x2}
-                cy={line.y2}
-                r="3"
-                fill={line.color}
-              />
-            </svg>
+            <div
+              style={{
+                position: 'absolute',
+                top: '-18px',
+                left: '0',
+                backgroundColor: annotation.color,
+                color: 'white',
+                fontSize: '10px',
+                padding: '2px 4px',
+                borderRadius: '2px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {annotation.type}
+            </div>
           </div>
         );
       })}
-    </>
+    </div>
   );
 };
 

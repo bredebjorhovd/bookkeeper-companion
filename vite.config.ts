@@ -19,4 +19,16 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['pdfjs-dist/build/pdf.worker.entry']
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pdfWorker: ['pdfjs-dist/build/pdf.worker.entry']
+        }
+      }
+    }
+  }
 }));
